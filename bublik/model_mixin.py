@@ -33,7 +33,8 @@ class BublikManager(BublikManagerMixin, models.Manager):
 
 
 class BublikModelMixin(models.Model):
-    bublik = BublikManager()
+    objects = BublikManager()
+    bublik = BublikManager()  # in case if default manager will be overwritten
 
     class Meta:
         abstract = True
