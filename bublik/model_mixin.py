@@ -47,7 +47,7 @@ class BublikModelMixin(models.Model):
     def get(cls, pk_or_unique, /):
         try:
             obj = cls.objects.get(pk=pk_or_unique)
-            print(f'match by primary key')
+            print(f'match by primary key: "{obj}"')
             return obj
         except (ObjectDoesNotExist, ValueError):
             for field in cls._meta.get_fields():
@@ -57,7 +57,7 @@ class BublikModelMixin(models.Model):
                         if issubclass(type(field), models.CharField):
                             query_lookup += '__iexact'
                         obj = cls.objects.get(**{query_lookup: str(pk_or_unique)})
-                        print(f'match by {field.name}')
+                        print(f'match by {field.name}: "{obj}"')
                         return obj
                     except (ObjectDoesNotExist, ValueError):
                         pass
