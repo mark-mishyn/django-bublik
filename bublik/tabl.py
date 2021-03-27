@@ -1,12 +1,13 @@
 import datetime
 import inspect
 
-from django.db.models.fields.related_descriptors import ManyToManyDescriptor
+from django.db.models import Manager
 
 
 def tabl(model_or_qs,
          field_names: str = '',
          limit: int = 300,
+         *,
          skip_authored: bool = True,
          max_columns=10,
          value_max_length=32):
@@ -31,6 +32,8 @@ def tabl(model_or_qs,
 
 
 class Tabler:
+    fields_to_skip = 'created_by', 'updated_by'
+    separator = ' | '
 
     def __init__(self,
                  model_or_qs,
@@ -41,9 +44,6 @@ class Tabler:
                  value_max_length):
         # TODO make string trim optional
         # TODO add option to skip all file/image fields
-        # TODO move max_columns to kwargs
-        # TODO use "key words only" feature
-        # TODO add optional arg to set separator
         # TODO tabl(Group) leads to TypeError: argument of type 'AutoField' is not iterable
         self.model_or_qs = model_or_qs
         self.field_names = field_names
@@ -51,7 +51,6 @@ class Tabler:
         self.skip_authored = skip_authored
         self.max_columns = max_columns
         self.value_max_length = value_max_length if not field_names else 80
-        self.fields_to_skip = 'created_by', 'updated_by'
 
         if inspect.isclass(model_or_qs):
             model = model_or_qs
@@ -75,7 +74,7 @@ class Tabler:
 
         if isinstance(attr, datetime.datetime):
             attr = attr.isoformat(' ', 'seconds')
-        elif isinstance(getattr(self.model, field_name), ManyToManyDescriptor):
+        elif hasattr(attr, '__class__') and issubclass(attr.__class__, Manager):
             attr = '; '.join([str(obj) for obj in attr.all()])
         elif callable(attr):
             attr = attr()
@@ -119,7 +118,7 @@ class Tabler:
             f_name: min(
                 max([len(f_name), *v]), value_max_length) for f_name, v in columns_widths.items()}
 
-        print(' | '.join([f_name.ljust(columns_widths[f_name]) for f_name in fields_names_list]))
+        print(self.separator.join([f_name.ljust(columns_widths[f_name]) for f_name in fields_names_list]))
         print('-' * (sum(columns_widths.values()) + len(columns_widths) * 3))
 
         for obj in qs_list:
@@ -127,4 +126,4 @@ class Tabler:
             for field_name in fields_names_list:
                 line_items.append(
                     str(self.get_value(obj, field_name)).ljust(columns_widths[field_name]))
-            print(' | '.join(line_items))
+            print(self.separator.join(line_items))
