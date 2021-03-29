@@ -44,7 +44,6 @@ class Tabler:
                  value_max_length):
         # TODO make string trim optional
         # TODO add option to skip all file/image fields
-        # TODO tabl(Group) leads to TypeError: argument of type 'AutoField' is not iterable
         self.model_or_qs = model_or_qs
         self.field_names = field_names
         self.limit = limit
@@ -64,13 +63,12 @@ class Tabler:
 
     def get_value(self, obj, field_name):
         if '.' in field_name:
-            attr = None
             for f_name in field_name.split('.'):
-                attr = getattr((attr or obj), f_name)
+                attr = obj = obj[f_name] if isinstance(obj, dict) else getattr(obj, f_name)
                 if not attr:
-                    break
+                    return None
         else:
-            attr = getattr(obj, field_name)
+            attr = obj[field_name] if isinstance(obj, dict) else getattr(obj, field_name)
 
         if isinstance(attr, datetime.datetime):
             attr = attr.isoformat(' ', 'seconds')
